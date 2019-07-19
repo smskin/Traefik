@@ -15,7 +15,7 @@ services:
       - ./data/traefik.toml:/traefik.toml
       - ./data/acme.json:/acme.json
     labels:
-      - traefik.enable=true
+      - traefik.enable=false
     container_name: traefik
     restart: always
 networks:
