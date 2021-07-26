@@ -1,0 +1,29 @@
+version: '2'
+services:
+  nginx:
+    build:
+      context: ./../
+      dockerfile: ./docker/nginx/Dockerfile
+      args:
+        - TZ=Europe/Moscow
+        - APP_CODE_PATH_CONTAINER=/var/www/html
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}.entrypoints=http
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}.rule=Host(`${NGINX_TRAEFIK_DOMAIN}`)
+      - traefik.http.middlewares.${NGINX_TRAEFIK_BACKEND_ALIAS}-https-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}.middlewares=${NGINX_TRAEFIK_BACKEND_ALIAS}-https-redirect
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}-secure.entrypoints=https
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}-secure.rule=Host(`${NGINX_TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}-secure.tls=true
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}-secure.service=${NGINX_TRAEFIK_BACKEND_ALIAS}
+      - traefik.http.routers.${NGINX_TRAEFIK_BACKEND_ALIAS}-secure.priority=2
+      - traefik.http.services.${NGINX_TRAEFIK_BACKEND_ALIAS}.loadbalancer.server.port=80
+      - traefik.docker.network=webproxy
+    networks:
+      - local
+      - webproxy
+networks:
+  local:
+    driver: bridge

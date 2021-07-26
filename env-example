@@ -1,1 +1,6 @@
-TRAEFIK_MANAGEMENT_HTTP_HOST_PORT=8080
+#https://medium.com/@containeroo/traefik-2-0-docker-a-simple-step-by-step-guide-e0be0c17cfa5
+CLOUDFLARE_API_EMAIL=
+CLOUDFLARE_API_KEY=
+BASE_HOST=example.com
+TRAEFIK_SUBDOMAIN=traefik
+TRAEFIK_PANEL_USER_CREDETIONALS=USER:PASSWORD

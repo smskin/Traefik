@@ -2,22 +2,40 @@ version: '3'
 
 services:
   traefik:
-    image: traefik:1.7
-    command: --docker
+    image: traefik:v2.0
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - webproxy
     ports:
       - 80:80
       - 443:443
-      -  ${TRAEFIK_MANAGEMENT_HTTP_HOST_PORT}:8080
-    networks:
-      - webproxy
+    environment:
+      - CF_API_EMAIL=${CLOUDFLARE_API_EMAIL}
+      - CF_API_KEY=${CLOUDFLARE_API_KEY}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/traefik.toml:/traefik.toml
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik.yml:/traefik.yml:ro
       - ./data/acme.json:/acme.json
     labels:
-      - traefik.enable=false
-    container_name: traefik
-    restart: always
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_SUBDOMAIN}.${BASE_HOST}`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_PANEL_USER_CREDETIONALS}"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`${TRAEFIK_SUBDOMAIN}.${BASE_HOST}`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=${BASE_HOST}"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.${BASE_HOST}"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.traefik-secure.priority=2"
 networks:
   webproxy:
     external: true
